@@ -1,2 +1,3 @@
-# wicher
-Program magazynowy Wicher
+# wicherdb-localserver
+Lokalny server programu Wicher.
+Zawiera błędy, lepiej użyć serwera globalnego.
