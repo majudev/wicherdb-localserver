@@ -1,42 +1,43 @@
 #!/bin/bash
-if [ -e Wicher ]; then
-	rm -r Wicher;
+DIR="$( cd "$( dirname "${BASH_SOURCE[0]}" )" && pwd )"
+cd $DIR
+if ! [ -e bin ]; then
+	mkdir bin
 fi
-mkdir -p Wicher/bin
-echo "Making and copying WicherDB local server..."
-cd WicherDB_Server
-./make.sh
+if ! [ -e obj ]; then
+	mkdir obj
+fi
+FLAGS="-O3 -Wall `pkg-config --cflags jansson` -Iinclude"
+LIBS="`pkg-config --libs jansson`"
 if [ "`uname | grep -c -i mingw`" != 0 ]; then
-	cp bin/DebugServer.exe ../Wicher/bin/local_server.exe
-else
-	cp bin/DebugServer ../Wicher/bin/local_server
+        LIBS="$LIBS -lws2_32"
 fi
-if [ -e database.db ]; then
-	cp database.db ../Wicher
-fi
-cd ..
-echo "Making and copying Wicher..."
-cd Wicher2.2
-./make.sh
-if [ "`uname | grep -c -i mingw`" != 0 ]; then
-	cp bin/Wicher.exe ../Wicher/bin/Wicher.exe
-else
-	cp bin/Wicher ../Wicher/bin/Wicher
-fi
-cp -r icons ../Wicher
-cp -r gui ../Wicher
-cd ..
-cd Starter
-./make.sh
-if [ "`uname | grep -c -i mingw`" != 0 ]; then
-	cp Wicher.exe ../Wicher/Wicher.exe
-else
-	cp Wicher ../Wicher/Wicher
-fi
-cd ..
-if [ "`uname -s`" == "Linux" ]; then
-	echo "Compiling WicherDB-fakeclient..."
-	cd wicherdb-fakeclient
-	./make.sh
-	cd ..
+g++ -c $FLAGS src/Log.cpp -o obj/log.o
+g++ -c $FLAGS src/Toolkit.cpp -o obj/toolkit.o
+g++ -c $FLAGS src/DatabaseHelper.cpp -o obj/databasehelper.o
+g++ -c $FLAGS src/DatabaseCreator.cpp -o obj/databasecreator.o
+g++ -c $FLAGS src/DatabaseUpdater.cpp -o obj/databaseupdater.o
+g++ -c $FLAGS src/DatabaseGetter.cpp -o obj/databasegetter.o
+g++ -c $FLAGS src/DatabaseDropper.cpp -o obj/databasedropper.o
+g++ -c $FLAGS src/DatabaseManager.cpp -o obj/databasemanager.o
+g++ -c $FLAGS src/MessageParser.cpp -o obj/messageparser.o
+g++ -c $FLAGS src/ConnectionManager.cpp -o obj/connectionmanager.o
+g++ -c $FLAGS src/Main.cpp -o obj/main.o
+g++ $FLAGS \
+	obj/log.o\
+	obj/toolkit.o\
+	obj/databasehelper.o\
+	obj/databasecreator.o\
+	obj/databaseupdater.o\
+	obj/databasegetter.o\
+	obj/databasedropper.o\
+	obj/databasemanager.o\
+	obj/messageparser.o\
+	obj/connectionmanager.o\
+	obj/main.o\
+	src/_main.cpp\
+	$LIBS\
+	-o bin/DebugServer
+if [ -e bin/DebugServer ] && ! [ -h run ]; then
+	ln -s bin/DebugServer run
 fi
