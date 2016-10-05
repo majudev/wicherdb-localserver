@@ -7,6 +7,6 @@ fi
 if [ -d obj ]; then
 	rm -r obj
 fi
-if [ -h run ]; then
+if [ -e run ]; then
 	rm run
 fi
