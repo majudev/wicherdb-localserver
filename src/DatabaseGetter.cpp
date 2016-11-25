@@ -256,12 +256,14 @@ std::string Wicher::DB::DatabaseManager::get_wz_items(int id){
     ErrorID errorid;
     json_t * obj = get_wz_json(id, &errorid);
     json_t * array = json_object_get(obj, "items");
-    if(!json_is_array(array)){
+    json_t * tarray = json_object_get(obj, "types");
+    if(!json_is_array(array) || !json_is_array(tarray)){
         free(msg_root);
         return error(errorid);
     }
 
     json_object_set_new(msg_root, "items", json_copy(array));
+    json_object_set_new(msg_root, "types", json_copy(tarray));
     char * tr_str = json_dumps(msg_root, JSON_COMPACT);
     std::string tr(tr_str);
     free(tr_str);
