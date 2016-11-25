@@ -1,4 +1,5 @@
 #include "ConnectionManager.h"
+#define MAX_BUFF 65535
 
 Wicher::DB::ConnectionManager::ConnectionManager(int port){
 #ifdef WIN
@@ -72,13 +73,9 @@ bool Wicher::DB::ConnectionManager::get_connection(){
 	}
 }
 
-std::string Wicher::DB::ConnectionManager::recv_msg(){
-    char buffer[256];
-#ifdef WIN
-    int r = recv(clientsock, buffer, 255, 0);
-#elif defined(UNI)
-    int r = read(clientsock, buffer, 255);
-#endif
+/*std::string Wicher::DB::ConnectionManager::recv_msg(){
+    char buffer[BUF_SIZE];
+    int r = recv(clientsock, buffer, BUF_SIZE, 0);
     if(r < 0){
         perror("Error when receiving message");
         std::string tr;
@@ -90,19 +87,66 @@ std::string Wicher::DB::ConnectionManager::recv_msg(){
     }
     std::string tr(buffer);
     return tr;
+}*/
+
+std::string Wicher::DB::ConnectionManager::recv_msg(){
+    uint16_t msize;
+    int res = recv(clientsock, &msize, 2, 0);
+    if(res != 2){
+        Log::server("Failed to recv message (cannot recv msg size)");
+        return std::string();
+    }
+    std::string tr;
+	char buffer[1025];
+    res = 0;
+    while(res < msize){
+        int res_tmp = recv(clientsock, buffer, 1024, 0);
+        if(res_tmp < 0){
+            Log::server("Failed to recv message (error when receiving content)");
+            break;
+        }
+        buffer[1024] = '\0';
+        res += res_tmp;
+        tr += buffer;
+    }
+    if(res == msize){
+        return tr;
+    }else return std::string();
 }
 
+/*bool Wicher::DB::ConnectionManager::send_msg(std::string msg){
+    unsigned int res = 0;
+    while(res < msg.size() + 1){
+        int res_tmp = send(clientsock, msg.c_str(), msg.size() + 1, 0);
+        if(res_tmp < 0){
+            perror("Error when writing to socket!");
+            break;
+        }
+        res += res_tmp;
+    }
+    return res == msg.size() + 1;
+}*/
 bool Wicher::DB::ConnectionManager::send_msg(std::string msg){
-#ifdef WIN
-    int res = send(clientsock, msg.c_str(), msg.size() + 1, 0);
-#elif defined(UNI)
-    int res = write(clientsock, msg.c_str(), msg.size() + 1);
-#endif
-    if(res != msg.size() + 1){
-        perror("Error when writing to socket!");
+    if(msg.size()+1 > MAX_BUFF){
+        Log::server("Failed to send message (message too big)");
         return false;
     }
-    return true;
+    uint16_t msize = msg.size() + 1;
+    int res = send(clientsock, &msize, 2, 0);
+    if(res != 2){
+        Log::server("Failed to send message (cannot send msg size)");
+        return false;
+    }
+	res = 0;
+    while(res < msize){
+        int res_tmp = send(clientsock, msg.c_str(), msize, 0);
+        if(res_tmp < 0){
+            Log::server("Failed to send message (error when sending content)");
+            break;
+        }//else std::cerr << "Sent: " << msg << std::endl;
+        res += res_tmp;
+    }
+	return res == msize;
 }
 
 bool Wicher::DB::ConnectionManager::is_up(){
