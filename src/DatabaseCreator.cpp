@@ -1,4 +1,6 @@
 #include "DatabaseManager.h"
+#include <algorithm>
+#include <cstring>
 
 bool Wicher::DB::DatabaseManager::create_item(int id, std::string type, std::string comment, ErrorID * errorid){
     if(item_exists(id, type)){
@@ -58,6 +60,24 @@ bool Wicher::DB::DatabaseManager::create_wz(int id, std::string date, std::strin
         ++y;
     }
     json_object_set_new(obj, "items", items_array);
+    
+    json_t * types_array = json_array();
+    std::sort(item_types.begin(), item_types.end());
+    item_types.erase(std::unique(item_types.begin(), item_types.end()), item_types.end());
+    y = 0;
+    while(y != item_types.size()){
+        unsigned int z = 0;
+        while(z < json_array_size(items)){
+            json_t * type_obj = json_array_get(items, z);
+            const char * type_id = json_string_value(json_object_get(type_obj, "id"));
+            if(type_id && strcmp(type_id, item_types[y].c_str()) == 0){
+                json_array_append_new(types_array, json_copy(type_obj));
+            }
+            ++z;
+        }
+        ++y;
+    }
+    json_object_set_new(obj, "types", types_array);
 
     json_array_append_new(wzs, obj);
     *errorid = NONE;
