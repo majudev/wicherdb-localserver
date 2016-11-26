@@ -69,8 +69,6 @@ bool Wicher::DB::DatabaseManager::create_wz(int id, std::string date, std::strin
         for(unsigned int z = 0; z < json_array_size(types); ++z){
             json_t * item_obj = json_array_get(types, z);
             const char * item_id = json_string_value(json_object_get(item_obj, "id"));
-            std::cout << "TID " << item_types[y] << std::endl;
-            if(item_id) std::cout << "IID " << item_id << std::endl;
             if(item_id && strcmp(item_id, item_types[y].c_str()) == 0){
                 json_array_append_new(types_array, json_copy(item_obj));
                 break;
