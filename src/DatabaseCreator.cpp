@@ -65,15 +65,16 @@ bool Wicher::DB::DatabaseManager::create_wz(int id, std::string date, std::strin
     std::sort(item_types.begin(), item_types.end());
     item_types.erase(std::unique(item_types.begin(), item_types.end()), item_types.end());
     y = 0;
-    while(y != item_types.size()){
-        unsigned int z = 0;
-        while(z < json_array_size(items)){
-            json_t * type_obj = json_array_get(items, z);
-            const char * type_id = json_string_value(json_object_get(type_obj, "id"));
-            if(type_id && strcmp(type_id, item_types[y].c_str()) == 0){
-                json_array_append_new(types_array, json_copy(type_obj));
+    while(y < item_types.size()){
+        for(unsigned int z = 0; z < json_array_size(types); ++z){
+            json_t * item_obj = json_array_get(types, z);
+            const char * item_id = json_string_value(json_object_get(item_obj, "id"));
+            std::cout << "TID " << item_types[y] << std::endl;
+            if(item_id) std::cout << "IID " << item_id << std::endl;
+            if(item_id && strcmp(item_id, item_types[y].c_str()) == 0){
+                json_array_append_new(types_array, json_copy(item_obj));
+                break;
             }
-            ++z;
         }
         ++y;
     }
